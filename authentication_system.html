@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Authentication system with bootstrap ui</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+    <style>
+        .code {
+            display: flex;
+            justify-content: space-between;
+            font-family: Consolas, "courier new";
+            color: crimson;
+            background-color: #f1f1f1;
+            padding: 10px 10px;
+            font-size: 105%;
+
+        }
+
+        .copybtn {
+            cursor: pointer;
+        }
+
+        ::selection {
+            background: rgba(92, 7, 24, 0.089);
+            color: rgb(92, 7, 24);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-5">
+        <h1 class="text-center">Authentication system with bootstrap ui</h1>
+        <h4>open terminal</h4>
+        <ol>
+            <li>
+                <h5>Create project</h5>
+                <div class="code">
+
+                    <code id="codeToCopy">composer create-project laravel/laravel auth-system</code>
+
+
+                </div>
+            </li>
+            <li>
+                <h5>Goto auth-system folder</h5>
+                <div class="code">
+                    <code id="codeToCopy">cd auth-system</code>
+
+                </div>
+            </li>
+            <li>
+                <h5>Open folder in vsCode</h5>
+                <div class="code"><code>code .</code></div>
+            </li>
+            <li>
+                <h5>create blank database</h5>
+            </li>
+            <li>
+                <h5>Open .env file and database credentials</h5>
+            </li>
+            <li>
+                <h5>Open create user table and add $table->string('role')->nullable(); in last</h5>
+            </li>
+            <li>
+                <h5>Run migrate Command</h5>
+                <div class="code"><code>php artisan migrate</code></div>
+            </li>
+            <li>
+                <h5>Install bootstrap ui</h5>
+                <div class="code"><code>composer require laravel/ui</code></div>
+            </li>
+            <li>
+                <h5>Generate basic scaffolding</h5>
+                <div class="code"><code>php artisan ui bootstrap --auth</code></div>
+            </li>
+            <li>
+                <h5>compile your fresh scaffolding</h5>
+                <div class="code"><code>npm install && npm run dev</code></div>
+            </li>
+            <li>
+                <h5>Create Middleware</h5>
+                <div class="code"><code>php artisan make:middleware adminMiddleware</code></div>
+            </li>
+            <li>
+                <h5>Open Middleware in <strong>app/Http/Middleware/adminMiddleware</strong> and add code</h5>
+                <div class="code"><code>
+<pre>
+use Illuminate\Support\Facades\Auth;
+
+// in handle function
+if(Auth::check()){
+    if(Auth::user()->role=="admin"){
+        return $next($request);
+    }
+    else{
+        return redirect('/home')->with('status','Access Denied! as you are not as admin');
+    }
+}
+else{
+    return redirect('/home')->with('status','Please Login First');
+}
+</pre>
+            </code></div>
+            </li>
+            <li>
+                <h5>Open Kernel.php file in <strong>app/Http/</strong> and add code in protected $middlewareAliases</h5>
+                <div class="code"><code>'isAdmin' => \App\Http\Middleware\AdminMiddleware::class,</code></div>
+            </li>
+            <li>
+                <h5>Open LoginController.php file in <strong>app/Http/Controllers/Auth</strong> and add code</h5>
+                <div class="code"><code>
+<pre>
+use Illuminate\Support\Facades\Auth;
+// protected $redirectTo = RouteServiceProvider::HOME;
+public function redirectTo()
+{
+    if(Auth::user()->role == 'admin') //1 = Admin Login
+    {
+        return 'dashboard';
+    }
+    elseif(Auth::user()->role == '') // Normal or Default User Login
+    {
+        return '/';
+    }
+}
+protected function authenticated()
+{
+    if(Auth::user()->role == 'admin') //1 = Admin Login
+    {
+        return redirect('dashboard')->with('status','Welcome to your dashboard');
+    }
+    elseif(Auth::user()->role == '') // Normal or Default User Login
+    {
+        return redirect('/')->with('status','Logged in successfully');
+    }
+}
+</pre>
+                </code></div>
+            </li>
+            <li>
+                <h5>Open web.php and create Routes</h5>
+                <div class="code"><code>
+<pre>
+use Illuminate\Support\Facades\Auth;
+
+Auth::routes();
+Route::group(['middleware' => ['auth','isAdmin']], function () {
+
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    });
+    
+});
+</pre>
+                </code></div>
+            </li>
+            <li>
+                <h5>Create admin folder in resources and create dashboard file in admin folder and add code </h5>
+                <div class="code"><code>
+<pre>
+@extends('layouts.app')
+
+@section('content')
+	&#60;div class="container bg-dark"&#62;
+    	&#60;div class="row justify-content-center"&#62;
+        	&#60;div class="col-md-8"&#62;
+            	&#60;div class="card"&#62;
+                	&#60;div class="card-header"&#62;{{ __('Dashboard') }}	&#60;/div&#62;
+
+                	&#60;div class="card-body"&#62;
+                    @if (session('status'))
+                        	&#60;div class="alert alert-success" role="alert"&#62;
+                            {{ session('status') }}
+                        	&#60;/div&#62;
+                    @endif
+
+                    {{ __('You are logged in!') }}
+                	&#60;/div&#62;
+            	&#60;/div&#62;
+        	&#60;/div&#62;
+    	&#60;/div&#62;
+	&#60;/div&#62;
+@endsection
+
+</pre>
+                </code></div>
+            </li>
+        </ol>
+
+    </div>
+
+    <!-- Bootstrap JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+
+    <!-- Your JavaScript content -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var codeElements = document.getElementsByTagName('code');
+            var countCode = codeElements.length;
+            var codediv = document.getElementsByClassName('code');
+
+            console.log('Number of code elements on the page: ' + countCode);
+
+            for (var i = 0; i < countCode; i++) {
+                codeElements[i].classList.add('code' + i);
+                console.log('Added class to code ' + i);
+
+                var div = document.createElement('i');
+                div.classList.add('fa-regular', 'fa-clipboard', 'px-3', 'copybtn');
+                div.id = 'copyButton' + i;
+                div.setAttribute('data-clipboard-target', '.code' + i);
+                div.setAttribute('data-toggle', 'tooltip');
+                div.setAttribute('data-placement', 'top');
+                div.setAttribute('title', 'Copy');
+
+                codediv[i].appendChild(div); // Fix here
+                var clipboard = new ClipboardJS('#copyButton' + i);
+                //console.log(clipboard);
+                clipboard.on('success', function (e) {
+                    // Change the title attribute of the button (tooltip text)
+                    console.log('Text copied to clipboard: ', e.text);
+                });
+                clipboard.on('error', function (e) {
+                    console.error('Error copying text to clipboard:', e.text);
+                });
+            }
+        });
+
+    </script>
+</body>
+
+</html>
